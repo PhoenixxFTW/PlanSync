@@ -25,6 +25,7 @@ public class PlanSync {
     private final OkHttpClient client;
 
     private String authCode;
+    private String accessToken;
 
     public PlanSync(String tenantID, String clientID, String secretID, String redirectUri, String scope) {
         this.tenantID = tenantID;
@@ -43,9 +44,8 @@ public class PlanSync {
     public void runApp() throws Exception {
         System.out.println("Open the following URL in a browser and grant consent: ");
         System.out.println(this.getAuthLink());
-/*
         // Input the authorization code the user received into the console
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+       /* BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print("Enter the code from the query parameters of the redirect URL: ");
         String authCode = br.readLine();
         this.setAuthCode(authCode);
@@ -63,16 +63,27 @@ public class PlanSync {
         // Parse the response and get the access token
         Map<String, Object> responseMap = new ObjectMapper().readValue(response.body().byteStream(), HashMap.class);
         String accessToken = (String) responseMap.get("access_token");*/
-        String accessToken = "eyJ0eXAiOiJKV1QiLCJub25jZSI6IkY3MU8ySVRFNVVwS0dieldZeWNXdHFVM21UNmpVb2JMaEZ2YTNmYzF4cGsiLCJhbGciOiJSUzI1NiIsIng1dCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9";
-        System.out.println("accessToken: " + accessToken);
         //TODO Refresh tokens
-        Request userRequest = this.createGetReq("graph.microsoft.com","/v1.0/users", Maps.newHashMap(new ImmutableMap.Builder<String, String>()
+        this.accessToken = "";
+        System.out.println("accessToken: " + this.accessToken);
+
+        Request userRequest = this.createGetReq("https://graph.microsoft.com","/v1.0/me/planner/tasks", Maps.newHashMap(new ImmutableMap.Builder<String, String>()
                 .put("Authorization", "Bearer " + accessToken)
                 .put("Content-Type", "application/json")
                 .build()));
 
-        Response response = client.newCall(userRequest).execute();
-        System.out.println("RESPONSE: " +response);
+        System.out.println("REQUEST: " + userRequest);
+
+        Response response = this.client.newCall(userRequest).execute();
+        System.out.println("RESPONSE: " +response.body().string());
+    }
+
+    private Response getUser() throws IOException {
+        Request userRequest = this.createGetReq("https://graph.microsoft.com","/v1.0/me", Maps.newHashMap(new ImmutableMap.Builder<String, String>()
+                .put("Authorization", "Bearer " + this.accessToken)
+                .put("Content-Type", "text/plain")
+                .build()));
+        return this.client.newCall(userRequest).execute();
     }
 
     /**
@@ -85,11 +96,9 @@ public class PlanSync {
      */
     private Request createGetReq(String host, String pathSeg, Map<String, String> headers) {
         // Build the URL we're creating the request for. Had to do it this way due to a OkHttpClient bug
-        HttpUrl.Builder urlBuilder = new HttpUrl.Builder().scheme("https").host(host).addPathSegment(pathSeg);
-        headers.forEach(urlBuilder::addQueryParameter);
-        HttpUrl url = urlBuilder.build();
-
-        return new Request.Builder().url(url).method("GET", null).build();
+        Request.Builder requestBuilder = new Request.Builder().url(host+pathSeg).method("GET", null);
+        headers.forEach(requestBuilder::addHeader);
+        return requestBuilder.build();
     }
 
     /**
@@ -142,21 +151,5 @@ public class PlanSync {
             e.printStackTrace();
             return "ERROR";
         }
-    }
-
-    /**
-     * Stores the auth code locally.
-     * @param authCode The local auth code.
-     */
-    public void setAuthCode(String authCode) {
-        this.authCode = authCode;
-    }
-
-    /**
-     * Gets the auth code.
-     * @return {@link String}
-     */
-    public String getAuthCode() {
-        return this.authCode;
     }
 }
