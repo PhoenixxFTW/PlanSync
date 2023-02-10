@@ -84,6 +84,8 @@ public class PlanSync {
             System.out.print("> ");
 
             choice = input.nextInt();
+            System.out.println();
+
             switch (choice) {
                 case 0:
                     // Exit the program
@@ -100,30 +102,67 @@ public class PlanSync {
                         PlannerBucketCollectionPage tasks = this.getPlannerBuckets(plannerPlan.id);
                         for(int j = 0; j < tasks.getCurrentPage().size(); j++){
                             PlannerBucket bucket = tasks.getCurrentPage().get(j);
-                            System.out.println("\t\t-> "+j+1+") " + bucket.name + " ("+bucket.id+")");
+                            System.out.println("\t\t-> "+(j+1)+") " + bucket.name + " ("+bucket.id+")");
                         }
                     }
                     break;
                 case 2:
-                    //TODO Figure out why labels don't stay when migrating
-                    System.out.println("Enter the ID of a Planner to migrate FROM (leave empty to exit): ");
-                    String movingFromPlannerID = input.next();
-                    if(movingFromPlannerID.isEmpty()) {
+                    System.out.println("======================== Planner Migration Menu ========================");
+                    PlannerPlanCollectionPage allPlanners = this.graphClient.groups(GROUP_ID).planner().plans().buildRequest().get();
+                    System.out.println("Total Planners: " + allPlanners.getCount());
+
+                    for(int i = 0; i < allPlanners.getCurrentPage().size(); i++) {
+                        PlannerPlan plannerPlan = allPlanners.getCurrentPage().get(i);
+                        System.out.printf((i+1)+") %-10s (%-10s)\n",plannerPlan.title,plannerPlan.id);
+                    }
+
+                    System.out.print("\nEnter the ID of the source Planner (0 to exit): ");
+                    int sourcePlannerID = input.nextInt();
+                    if(sourcePlannerID <= 0 || sourcePlannerID > allPlanners.getCurrentPage().size()) {
                         break;
                     }
-                    System.out.println("Enter the ID of a Planner to migrate TO (leave empty to exit): ");
-                    String movingToPlannerID = input.next();
-                    if(movingToPlannerID.isEmpty()) {
+                    // We get the source planner at the given index (subtract 1 because they start from 1)
+                    PlannerPlan sourcePlanner = allPlanners.getCurrentPage().get(sourcePlannerID - 1);
+
+                    System.out.print("Enter the ID of the target Planner (0 to exit): ");
+                    int targetPlannerID = input.nextInt();
+                    if(targetPlannerID <= 0 || targetPlannerID > allPlanners.getCurrentPage().size()) {
                         break;
                     }
-                    System.out.println("Enter the ID of a Bucket to move tasks TO (leave empty to exit): ");
-                    String bucketID = input.next();
-                    if(bucketID.isEmpty()) {
+                    // We get the target planner at the given index (subtract 1 because they start from 1)
+                    PlannerPlan targetPlanner = allPlanners.getCurrentPage().get(targetPlannerID - 1);
+
+                    System.out.println("\nBuckets from " + targetPlanner.title +": ");
+                    PlannerBucketCollectionPage tasks = this.getPlannerBuckets(targetPlanner.id);
+                    for(int j = 0; j < tasks.getCurrentPage().size(); j++){
+                        PlannerBucket bucket = tasks.getCurrentPage().get(j);
+                        System.out.println((j+1)+") " + bucket.name + " ("+bucket.id+")");
+                    }
+
+                    System.out.print("\nEnter the ID of the target Bucket (0 to exit): ");
+                    int targetBucketID = input.nextInt();
+                    if(targetBucketID <= 0 || targetBucketID > tasks.getCurrentPage().size()) {
+                        break;
+                    }
+                    // We get the target bucket at the given index (subtract 1 because they start from 1)
+                    PlannerBucket targetBucket = tasks.getCurrentPage().get(targetBucketID - 1);
+
+                    System.out.print("Enter a prefix to add to the moved tasks (leave empty to exit): ");
+                    String titlePrefix = input.next();
+                    if(titlePrefix.isEmpty()) {
+                        break;
+                    }
+
+                    // Migration confirmation
+                    System.out.println("\nAre you sure you want to move tasks from planner \"" + sourcePlanner.title + "\" to bucket \"" + targetBucket.name + "\" in planner \"" + targetPlanner.title +"\" with the prefix \"" + titlePrefix +"\"?");
+                    System.out.print("(y/n): ");
+                    String check = input.next();
+                    if (!check.equalsIgnoreCase("y")) {
                         break;
                     }
 
                     // Create request to get all the tasks in the given planner
-                    Request request = this.createGetReq("https://graph.microsoft.com", "/v1.0/planner/plans/"+movingFromPlannerID+"/tasks",
+                    Request request = this.createGetReq("https://graph.microsoft.com", "/v1.0/planner/plans/"+sourcePlanner.id+"/tasks",
                             Maps.newHashMap(new ImmutableMap.Builder<String, String>()
                                     .put("Content-Type", "application/json")
                                     .put("Authorization", "Bearer " + this.accessToken).build()));
@@ -132,6 +171,7 @@ public class PlanSync {
                     // Convert the response into an JSON object in order to parse the eTag value
                     JSONObject responseObj = new JSONObject(response.body().string());
                     JSONArray taskArray = responseObj.getJSONArray("value");
+                    System.out.println();
                     System.out.println("Preparing to move " + taskArray.length() + " tasks...");
                     for (int i = 0; i < taskArray.length(); i++) {
                         JSONObject taskObject = taskArray.getJSONObject(i);
@@ -142,10 +182,11 @@ public class PlanSync {
                         eTag = eTag.substring(2,39) + "\"";
                         // Get the task ID
                         String taskId = taskObject.getString("id");
+                        String taskName = taskObject.getString("title");
 
                         // Create a new request that will be used to PATCH / UPDATE the task above. We change the bucketID and planID to move the task to a new location.
                         MediaType mediaType = MediaType.parse("application/json");
-                        RequestBody body = RequestBody.create(mediaType, "{\n  \"bucketId\": \""+bucketID+"\",\n  \"planId\": \""+movingToPlannerID+"\"\n}");
+                        RequestBody body = RequestBody.create(mediaType, "{\n  \"bucketId\": \""+targetBucket.id+"\",\n  \"planId\": \""+targetPlanner.id+"\",\n  \"title\": \""+titlePrefix+" - "+taskName+"\"\n}");
                         request = new Request.Builder()
                                 .url("https://graph.microsoft.com/v1.0/planner/tasks/"+taskId)
                                 .method("PATCH", body)
@@ -156,7 +197,7 @@ public class PlanSync {
 
                         response = client.newCall(request).execute();
 
-                        System.out.println("Completed " + i + "/"+taskArray.length());
+                        System.out.println("Completed " + (i+1) + "/"+taskArray.length());
                     }
                     break;
                 default:
