@@ -196,8 +196,11 @@ public class PlanSync {
                                 .build();
 
                         response = client.newCall(request).execute();
-
-                        System.out.println("Completed " + (i+1) + "/"+taskArray.length());
+                        if(response.isSuccessful()) {
+                            System.out.println("Completed " + (i+1) + "/"+taskArray.length());
+                        } else {
+                            System.out.println("Failed to move task #"+(i+1) + " ID: " + taskId + " \n FULL: " + response.body().toString());
+                        }
                     }
                     break;
                 default:
