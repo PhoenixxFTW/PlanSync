@@ -19,12 +19,7 @@ public class Main {
 
         PlanSync planSync = new PlanSync(
                 oAuthProperties.getProperty("clientID"),
-                Sets.newHashSet(
-                        "User.Read", "offline_access",
-                        "openid", "profile",
-                        "User.ReadBasic.All", "Tasks.Read",
-                        "Tasks.Read.Shared",
-                        "Tasks.ReadWrite", "Tasks.ReadWrite.Shared"));
+                Sets.newHashSet(oAuthProperties.getProperty("scope").split(", ")));
 
         planSync.runApp();
     }
