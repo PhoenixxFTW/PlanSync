@@ -35,27 +35,20 @@ import java.util.function.Consumer;
  * @since 6:15 PM [08-02-2023]
  */
 public class PlanSync {
-
-    private final String tenantID;
     private final String clientID;
-    private final String secretID;
-
-    private final String redirectUri;
     private final Set<String> scope;
-
-    private String authCode;
     private String accessToken;
     private final OkHttpClient client;
 
     private final GraphServiceClient<Request> graphClient;
 
+    // This will need to be updated in the future if you want to change the Azure group
+    private final static String GROUP_ID = "c383d3c7-a2c2-47b4-9e6e-b605e994fab3";
+
     private final static String authLink = "https://login.microsoftonline.com/common/";
 
-    public PlanSync(String tenantID, String clientID, String secretID, String redirectUri, Set<String> scope) {
-        this.tenantID = tenantID;
-        this.secretID = secretID;
+    public PlanSync(String clientID, Set<String> scope) {
         this.clientID = clientID;
-        this.redirectUri = redirectUri;
         this.scope = scope;
 
         this.client = new OkHttpClient().newBuilder().build();
@@ -97,7 +90,7 @@ public class PlanSync {
                     System.out.println("Exiting...");
                     break;
                 case 1:
-                    PlannerPlanCollectionPage plans = this.graphClient.groups("c383d3c7-a2c2-47b4-9e6e-b605e994fab3").planner().plans().buildRequest().get();
+                    PlannerPlanCollectionPage plans = this.graphClient.groups(GROUP_ID).planner().plans().buildRequest().get();
                     System.out.println("Total Planners: " + plans.getCount());
                     for(int i = 0; i < plans.getCurrentPage().size(); i++) {
                         PlannerPlan plannerPlan = plans.getCurrentPage().get(i);
@@ -107,11 +100,12 @@ public class PlanSync {
                         PlannerBucketCollectionPage tasks = this.getPlannerBuckets(plannerPlan.id);
                         for(int j = 0; j < tasks.getCurrentPage().size(); j++){
                             PlannerBucket bucket = tasks.getCurrentPage().get(j);
-                            System.out.println("\t\t-> "+j+") " + bucket.name + " ("+bucket.id+")");
+                            System.out.println("\t\t-> "+j+1+") " + bucket.name + " ("+bucket.id+")");
                         }
                     }
                     break;
                 case 2:
+                    //TODO Figure out why labels don't stay when migrating
                     System.out.println("Enter the ID of a Planner to migrate FROM (leave empty to exit): ");
                     String movingFromPlannerID = input.next();
                     if(movingFromPlannerID.isEmpty()) {
@@ -128,35 +122,28 @@ public class PlanSync {
                         break;
                     }
 
-                    /**
-                     * PROCESS FOR MOVING TASKS
-                     * 1) Get the Task from the planner via https://graph.microsoft.com/v1.0/planner/tasks/{planID}
-                     * 2) Read in the latest eTag (for example "JzEtVGFzayAgQEBAQEBAQEBAQEBAQEBATCc=" from the response from step one
-                     * 3) Create new json with new planID and bucketID
-                     * 4) monies
-                     * https://graph.microsoft.com/v1.0/planner/tasks/QnGVJNCY8k6ry4PEcZEZPGUACRFE
-                     * https://graph.microsoft.com/v1.0/planner/plans/{plan-id}/tasks
-                     */
-
                     // Create request to get all the tasks in the given planner
                     Request request = this.createGetReq("https://graph.microsoft.com", "/v1.0/planner/plans/"+movingFromPlannerID+"/tasks",
                             Maps.newHashMap(new ImmutableMap.Builder<String, String>()
                                     .put("Content-Type", "application/json")
                                     .put("Authorization", "Bearer " + this.accessToken).build()));
                     Response response = this.client.newCall(request).execute();
-                    // TODO Loop through response data and replace all planner ID and bucketID's for each task to the new one
 
+                    // Convert the response into an JSON object in order to parse the eTag value
                     JSONObject responseObj = new JSONObject(response.body().string());
                     JSONArray taskArray = responseObj.getJSONArray("value");
+                    System.out.println("Preparing to move " + taskArray.length() + " tasks...");
                     for (int i = 0; i < taskArray.length(); i++) {
                         JSONObject taskObject = taskArray.getJSONObject(i);
 
+                        // This eTag value is essentially used as a hash, we compare it with the new request each time
                         String eTag = taskObject.getString("@odata.etag");
-                        //System.out.println("ORIGINAL eTAG: " + eTag);
+                        // Clear off the surrounding characters
                         eTag = eTag.substring(2,39) + "\"";
-                        //System.out.println("NEW ETAG: " + eTag);
+                        // Get the task ID
                         String taskId = taskObject.getString("id");
 
+                        // Create a new request that will be used to PATCH / UPDATE the task above. We change the bucketID and planID to move the task to a new location.
                         MediaType mediaType = MediaType.parse("application/json");
                         RequestBody body = RequestBody.create(mediaType, "{\n  \"bucketId\": \""+bucketID+"\",\n  \"planId\": \""+movingToPlannerID+"\"\n}");
                         request = new Request.Builder()
@@ -167,52 +154,15 @@ public class PlanSync {
                                 .addHeader("Authorization", "Bearer " + this.accessToken)
                                 .build();
 
-                        System.out.println("REQUEST: " + request);
-
                         response = client.newCall(request).execute();
-                        System.out.println("RESPONSE: " + response);
-                        System.out.println("COMPLETED: " + i);
+
+                        System.out.println("Completed " + i + "/"+taskArray.length());
                     }
-                    // ALL THIS WORKS
-                    /*String testTaskID = "QnGVJNCY8k6ry4PEcZEZPGUACRFE";
-
-                    String progressBucket = "XV66tDVdyEWUpb8DCAmw1WUAMsgz";
-                    String completedBucket = "KPyI0ItWtUCVY4mMWLUwbWUAIh8S"; // Varonis completed bucket
-
-                    Request getReq = this.createGetReq("https://graph.microsoft.com", "/v1.0/planner/tasks/"+testTaskID,
-                            Maps.newHashMap(new ImmutableMap.Builder<String, String>()
-                                    .put("Content-Type", "application/json")
-                                    .put("Authorization", "Bearer " + this.accessToken).build()));
-                    Response response = this.client.newCall(getReq).execute();
-
-                    JSONObject jsonObject = new JSONObject(response.body().string());
-                    String eTag = jsonObject.getString("@odata.etag");
-                    System.out.println("ORIGINAL eTAG: " + eTag);
-                    eTag = eTag.substring(2,39) + "\"";
-
-                    System.out.println("NEW ETAG: " + eTag);
-
-                    MediaType mediaType = MediaType.parse("application/json");
-                    RequestBody body = RequestBody.create(mediaType, "{\n  \"bucketId\": \""+completedBucket+"\"\n}");
-                    Request request = new Request.Builder()
-                            .url("https://graph.microsoft.com/v1.0/planner/tasks/"+testTaskID)
-                            .method("PATCH", body)
-                            .addHeader("Content-Type", "application/json")
-                            .addHeader("If-Match", eTag)
-                            .addHeader("Authorization", "Bearer " + this.accessToken)
-                            .build();
-
-                    response = client.newCall(request).execute();
-
-                    System.out.println("RESPONSE: " + response);*/
-
                     break;
                 default:
                     System.out.println("Invalid choice");
             }
         }
-
-        System.out.println("Access token: " + accessToken);
     }
 
     /**

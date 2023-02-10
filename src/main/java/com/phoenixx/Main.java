@@ -18,10 +18,7 @@ public class Main {
         oAuthProperties.load(Main.class.getResourceAsStream("/auth.properties"));
 
         PlanSync planSync = new PlanSync(
-                oAuthProperties.getProperty("tenantID"),
                 oAuthProperties.getProperty("clientID"),
-                oAuthProperties.getProperty("secretID"),
-                oAuthProperties.getProperty("redirectUri"),
                 Sets.newHashSet(
                         "User.Read", "offline_access",
                         "openid", "profile",
@@ -30,7 +27,5 @@ public class Main {
                         "Tasks.ReadWrite", "Tasks.ReadWrite.Shared"));
 
         planSync.runApp();
-
     }
-
 }
