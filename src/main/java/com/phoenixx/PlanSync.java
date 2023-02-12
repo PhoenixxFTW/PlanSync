@@ -199,7 +199,7 @@ public class PlanSync {
                         if(response.isSuccessful()) {
                             System.out.println("Completed " + (i+1) + "/"+taskArray.length());
                         } else {
-                            System.out.println("Failed to move task #"+(i+1) + " ID: " + taskId + " \n FULL: " + response.body().toString());
+                            System.out.println("Failed to move task #"+(i+1) + " ID: " + taskId + " \n Request sent: " + request + " \n Response: " + response.body().string());
                         }
                     }
                     break;
