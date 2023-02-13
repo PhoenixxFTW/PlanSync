@@ -1,6 +1,7 @@
 package com.phoenixx;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.microsoft.aad.msal4j.DeviceCode;
 import com.microsoft.aad.msal4j.DeviceCodeFlowParameters;
@@ -23,6 +24,7 @@ import org.json.JSONObject;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -69,7 +71,8 @@ public class PlanSync {
      * @throws Exception IOException, etc
      */
     public void runApp() throws Exception {
-        this.accessToken = this.getUserAccessToken(this.scope);
+        //this.accessToken = this.getUserAccessToken(this.scope);
+        this.accessToken = "eyJ0eXAiOiJKV1QiLCJub25jZSI6IkpvblNkWDFPaU9uZDQzNlpVTTVLbzZBOWtUbldEb1ZEdXNnT2szV3FpMmciLCJhbGciOiJSUzI1NiIsIng1dCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9jZGRjMTIyOS1hYzJhLTRiOTctYjc4YS0wZTVjYWNiNTg2NWMvIiwiaWF0IjoxNjc2MjU1NjAzLCJuYmYiOjE2NzYyNTU2MDMsImV4cCI6MTY3NjI2MDQ4NCwiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFWUUFxLzhUQUFBQUN0cHpoMlN3NHFmczE2eVgvVWlXdmg1SlVZMHQwaVhqREczdkJJdDZjZXUxb1ZOMytYejIvcDcweU5Wak9oWGROWlRYeUpaSk5qM3J0WXppMXc3UXhlU05kY0hoRDRPdVljek5mQmwzTnI0PSIsImFtciI6WyJwd2QiLCJtZmEiXSwiYXBwX2Rpc3BsYXluYW1lIjoiUGxhblN5bmMiLCJhcHBpZCI6IjhhZGUyODdmLTcxOTEtNGUyMC04MzdiLTU2MjFmNmY0Y2Y0ZCIsImFwcGlkYWNyIjoiMCIsImNvbnRyb2xzIjpbImFwcF9yZXMiXSwiY29udHJvbHNfYXVkcyI6WyIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiXSwiZmFtaWx5X25hbWUiOiJUYWxwdXIiLCJnaXZlbl9uYW1lIjoiSnVuYWlkIiwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiMTQyLjE5OC43Ny4xODIiLCJuYW1lIjoiVGFscHVyLCBKdW5haWQgKE1QQlNEKSIsIm9pZCI6IjQ4YTAwNDZlLTU5ZjctNGExZC1hZTUzLWM4ODM3ZDg5OTgzNCIsIm9ucHJlbV9zaWQiOiJTLTEtNS0yMS0yODExNDY2NTc3LTQxMTQ3MjU1MTAtMjA5NTUzOTU5NS0yMDY3OTEiLCJwbGF0ZiI6IjE0IiwicHVpZCI6IjEwMDMyMDAyNTlGMDRCQTgiLCJyaCI6IjAuQVJ3QUtSTGN6U3FzbDB1M2lnNWNyTFdHWEFNQUFBQUFBQUFBd0FBQUFBQUFBQUFjQU5BLiIsInNjcCI6IkNhbGVuZGFycy5SZWFkIGVtYWlsIE1haWwuUmVhZCBvcGVuaWQgcHJvZmlsZSBUYXNrcy5SZWFkIFRhc2tzLlJlYWQuU2hhcmVkIFRhc2tzLlJlYWRXcml0ZSBUYXNrcy5SZWFkV3JpdGUuU2hhcmVkIFVzZXIuUmVhZCBVc2VyLlJlYWRCYXNpYy5BbGwiLCJzdWIiOiJQUFRmemlWN0JvT2hVTUlWMGpzaURiNXdwazVtek1FQTh6QWtuVHJ5VHZNIiwidGVuYW50X3JlZ2lvbl9zY29wZSI6Ik5BIiwidGlkIjoiY2RkYzEyMjktYWMyYS00Yjk3LWI3OGEtMGU1Y2FjYjU4NjVjIiwidW5pcXVlX25hbWUiOiJKdW5haWQuVGFscHVyQG9udGFyaW8uY2EiLCJ1cG4iOiJKdW5haWQuVGFscHVyQG9udGFyaW8uY2EiLCJ1dGkiOiJ2T0lHWUFnRWVreUZXbzJNT3dnd0FBIiwidmVyIjoiMS4wIiwid2lkcyI6WyJiNzlmYmY0ZC0zZWY5LTQ2ODktODE0My03NmIxOTRlODU1MDkiXSwieG1zX3N0Ijp7InN1YiI6IjBmUWFCWXBDQlVFVllDU2k5X0xrZUg4eFhZTVZUQVl4eWx0UERUdTNGbXMifSwieG1zX3RjZHQiOjE0NzgyNjg4NzV9.ruRSsVUEOcHIniU-KyuBu81zTnbYzksBVghLLSKXSjvU2oa-BhddJ3r_apc21PhPmNEuoHByXzGsrp1bgItk4ypILcxlvxUt5olOxo8tK9a75-oL4wqzwjbGyH-KSF5-6N_4eKBMGNQAXWh7b5cUlXykL383exUNfzuLRNpRGxTz-7zjfK8wS2eh3k82JDm34NuMaPynb28XIcqZwkqUz02LNzUCsPtcpEkD55hZElYkuGEu7720uD2P0WnZ8Ade-882xTBuzeMB0zIdw5bOi0lvN4LTbtAHzbcT4-YFa8--UlwkfwVD3Giw1GlVI1PcggV2ZqZEywJhAyx19b8TGg";
         System.out.println("Retrieved access token: " + this.accessToken);
 
         int choice = -1;
@@ -144,13 +147,15 @@ public class PlanSync {
                     if(targetBucketID <= 0 || targetBucketID > tasks.getCurrentPage().size()) {
                         break;
                     }
+                    input.nextLine(); //throw away the \n not consumed by nextInt()
+
                     // We get the target bucket at the given index (subtract 1 because they start from 1)
                     PlannerBucket targetBucket = tasks.getCurrentPage().get(targetBucketID - 1);
 
-                    System.out.print("Enter a prefix to add to the moved tasks (leave empty to exit): ");
-                    String titlePrefix = input.next();
+                    System.out.print("Enter a prefix to add to the moved tasks (leave empty for no prefix): ");
+                    String titlePrefix = input.nextLine();
                     if(titlePrefix.isEmpty()) {
-                        break;
+                        titlePrefix = "";
                     }
 
                     // Migration confirmation
@@ -162,45 +167,100 @@ public class PlanSync {
                     }
 
                     // Create request to get all the tasks in the given planner
-                    Request request = this.createGetReq("https://graph.microsoft.com", "/v1.0/planner/plans/"+sourcePlanner.id+"/tasks",
+                    Request getReq = this.createGetReq("https://graph.microsoft.com", "/v1.0/planner/plans/"+sourcePlanner.id+"/tasks",
                             Maps.newHashMap(new ImmutableMap.Builder<String, String>()
                                     .put("Content-Type", "application/json")
                                     .put("Authorization", "Bearer " + this.accessToken).build()));
-                    Response response = this.client.newCall(request).execute();
+                    Response response = this.client.newCall(getReq).execute();
 
                     // Convert the response into an JSON object in order to parse the eTag value
                     JSONObject responseObj = new JSONObject(response.body().string());
                     JSONArray taskArray = responseObj.getJSONArray("value");
                     System.out.println();
-                    System.out.println("Preparing to move " + taskArray.length() + " tasks...");
-                    for (int i = 0; i < taskArray.length(); i++) {
-                        JSONObject taskObject = taskArray.getJSONObject(i);
 
-                        // This eTag value is essentially used as a hash, we compare it with the new request each time
-                        String eTag = taskObject.getString("@odata.etag");
-                        // Clear off the surrounding characters
-                        eTag = eTag.substring(2,39) + "\"";
-                        // Get the task ID
-                        String taskId = taskObject.getString("id");
-                        String taskName = taskObject.getString("title");
+                    // This is the max amount of requests we can fit inside one batch request
+                    int MAX_BATCH_REQUESTS = 20;
+                    List<JSONObject> taskList = Lists.newArrayList();
+                    for(int i = 0; i < taskArray.length(); i++) {
+                        taskList.add(taskArray.getJSONObject(i));
+                    }
 
-                        // Create a new request that will be used to PATCH / UPDATE the task above. We change the bucketID and planID to move the task to a new location.
-                        MediaType mediaType = MediaType.parse("application/json");
-                        RequestBody body = RequestBody.create(mediaType, "{\n  \"bucketId\": \""+targetBucket.id+"\",\n  \"planId\": \""+targetPlanner.id+"\",\n  \"title\": \""+titlePrefix+" - "+taskName+"\"\n}");
-                        request = new Request.Builder()
-                                .url("https://graph.microsoft.com/v1.0/planner/tasks/"+taskId)
-                                .method("PATCH", body)
+                    List<List<JSONObject>> partitions = Lists.partition(taskList, MAX_BATCH_REQUESTS);
+                    System.out.println("Preparing to move " + taskArray.length() + " tasks in " + partitions.size() + " batch requests...");
+
+                    int batchCount = 1;
+                    // Portion our task list into subsets of n size (MAX_BATCH_REQUESTS)
+                    for (List<JSONObject> partition : partitions) {
+                        JSONObject updatedTasksObj = new JSONObject();
+                        JSONArray updatedTasks = new JSONArray();
+
+                        for (int i = 0; i < partition.size(); i++) {
+                            JSONObject taskObject = partition.get(i);
+                            // This eTag value is essentially used as a hash, we compare it with the new request each time
+                            String eTag = taskObject.getString("@odata.etag");
+                            // Clear off the surrounding characters
+                            eTag = eTag.substring(2,39) + "\"";
+                            // Get the task ID
+                            String taskId = taskObject.getString("id");
+                            String taskName = taskObject.getString("title");
+
+                            JSONObject batchObject = new JSONObject();
+                            batchObject.put("id", i);
+                            batchObject.put("method", "PATCH");
+                            batchObject.put("url", "/planner/tasks/"+taskId);
+
+                            JSONObject taskBody = new JSONObject();
+                            taskBody.put("bucketId", targetBucket.id);
+                            taskBody.put("planId", targetPlanner.id);
+                            if(!titlePrefix.isEmpty()) {
+                                taskBody.put("title", titlePrefix+" - "+taskName);
+                            }
+                            batchObject.put("body", taskBody);
+
+                            JSONObject headers = new JSONObject();
+                            headers.put("Content-Type", "application/json");
+                            headers.put("If-Match", eTag);
+                            headers.put("Authorization", "Bearer " + this.accessToken);
+                            batchObject.put("headers", headers);
+
+                            updatedTasks.put(batchObject);
+                        }
+                        updatedTasksObj.put("requests", updatedTasks);
+                        Request batchRequest = new Request.Builder()
+                                .url("https://graph.microsoft.com/v1.0/$batch")
                                 .addHeader("Content-Type", "application/json")
-                                .addHeader("If-Match", eTag)
                                 .addHeader("Authorization", "Bearer " + this.accessToken)
+                                .post(RequestBody.create(updatedTasksObj.toString(), MediaType.parse("application/json")))
                                 .build();
 
-                        response = client.newCall(request).execute();
+                        // Execute the request
+                        response = client.newCall(batchRequest).execute();
+
                         if(response.isSuccessful()) {
-                            System.out.println("Completed " + (i+1) + "/"+taskArray.length());
+                            System.out.println("Batch #"+batchCount + " successfully moved " + partition.size() + " tasks.");
                         } else {
-                            System.out.println("Failed to move task #"+(i+1) + " ID: " + taskId + " \n Request sent: " + request + " \n Response: " + response.body().string());
+                            System.out.println("Batch #"+batchCount + " failed to move " + partition.size() + " tasks.");
                         }
+
+                        responseObj = new JSONObject(response.body().string());
+                        JSONArray responseArray = responseObj.getJSONArray("responses");
+
+                        boolean failure = false;
+                        for(int i = 0; i < responseArray.length(); i++) {
+                            JSONObject jsonObject = responseArray.getJSONObject(i);
+
+                            if(jsonObject.getInt("status") != 204) {
+                                failure = true;
+                                System.out.println("Batch #"+batchCount + " may have had an failed response object! Check the JSON response below for any mishaps.");
+                            }
+                        }
+
+                        if(failure) {
+                            System.out.println("Batch Request [#" + batchCount +"]: " + bodyToString(batchRequest));
+                            System.out.println("Batch Response [#"+ batchCount +"]: " + response.body().string());
+                        }
+
+                        batchCount++;
                     }
                     break;
                 default:
