@@ -234,17 +234,19 @@ public class PlanSync {
 
                         // Execute the request
                         response = client.newCall(batchRequest).execute();
+                        boolean failure = false;
 
                         if(response.isSuccessful()) {
                             System.out.println("Batch #"+batchCount + " successfully moved " + partition.size() + " tasks.");
                         } else {
+                            failure = true;
                             System.out.println("Batch #"+batchCount + " failed to move " + partition.size() + " tasks.");
                         }
 
                         responseObj = new JSONObject(response.body().string());
                         JSONArray responseArray = responseObj.getJSONArray("responses");
 
-                        boolean failure = false;
+
                         for(int i = 0; i < responseArray.length(); i++) {
                             JSONObject jsonObject = responseArray.getJSONObject(i);
 
