@@ -39,19 +39,23 @@ import java.util.function.Consumer;
 public class PlanSync {
     private final String clientID;
     private final Set<String> scope;
+
+    private final List<String> groupNames;
+    private final Map<String, String> groups;
+
     private String accessToken;
     private final OkHttpClient client;
 
     private final GraphServiceClient<Request> graphClient;
 
-    // This will need to be updated in the future if you want to change the Azure group
-    private final static String GROUP_ID = "c383d3c7-a2c2-47b4-9e6e-b605e994fab3";
-
     private final static String authLink = "https://login.microsoftonline.com/common/";
 
-    public PlanSync(String clientID, Set<String> scope) {
+    public PlanSync(String clientID, Set<String> scope, Map<String, String> groups) {
         this.clientID = clientID;
         this.scope = scope;
+        this.groups = groups;
+
+        this.groupNames = Lists.newArrayList(this.groups.keySet());
 
         this.client = new OkHttpClient().newBuilder().build();
 
@@ -71,8 +75,8 @@ public class PlanSync {
      * @throws Exception IOException, etc
      */
     public void runApp() throws Exception {
-        //this.accessToken = "eyJ0eXAiOiJKV1QiLCJub25jZSI6IjJ4NFQzb0V5Sm8yd1dfNE5ISmRxV1g1azBETl9jdmUyNHJUbWROeGp1cEkiLCJhbGciOiJSUzI1NiIsIng1dCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9jZGRjMTIyOS1hYzJhLTRiOTctYjc4YS0wZTVjYWNiNTg2NWMvIiwiaWF0IjoxNjc2Mzg3MDczLCJuYmYiOjE2NzYzODcwNzMsImV4cCI6MTY3NjM5MTQwOCwiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFUUUF5LzhUQUFBQXNIT2c1M1ZCODBzNVVPS2Ird0lFU2FBQy9xRSt5alFYTVBTUzBoZEZpZlI5ZlhraGtCSXNPMEV0WjgxRlA5Y3UiLCJhbXIiOlsicHdkIl0sImFwcF9kaXNwbGF5bmFtZSI6IlBsYW5TeW5jIiwiYXBwaWQiOiI4YWRlMjg3Zi03MTkxLTRlMjAtODM3Yi01NjIxZjZmNGNmNGQiLCJhcHBpZGFjciI6IjAiLCJmYW1pbHlfbmFtZSI6IlRhbHB1ciIsImdpdmVuX25hbWUiOiJKdW5haWQiLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiIyMDQuNDAuMTI5Ljc0IiwibmFtZSI6IlRhbHB1ciwgSnVuYWlkIChNUEJTRCkiLCJvaWQiOiI0OGEwMDQ2ZS01OWY3LTRhMWQtYWU1My1jODgzN2Q4OTk4MzQiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtMjgxMTQ2NjU3Ny00MTE0NzI1NTEwLTIwOTU1Mzk1OTUtMjA2NzkxIiwicGxhdGYiOiIxNCIsInB1aWQiOiIxMDAzMjAwMjU5RjA0QkE4IiwicmgiOiIwLkFSd0FLUkxjelNxc2wwdTNpZzVjckxXR1hBTUFBQUFBQUFBQXdBQUFBQUFBQUFBY0FOQS4iLCJzY3AiOiJDYWxlbmRhcnMuUmVhZCBlbWFpbCBNYWlsLlJlYWQgb3BlbmlkIHByb2ZpbGUgVGFza3MuUmVhZCBUYXNrcy5SZWFkLlNoYXJlZCBUYXNrcy5SZWFkV3JpdGUgVGFza3MuUmVhZFdyaXRlLlNoYXJlZCBVc2VyLlJlYWQgVXNlci5SZWFkQmFzaWMuQWxsIiwic2lnbmluX3N0YXRlIjpbImlua25vd25udHdrIl0sInN1YiI6IlBQVGZ6aVY3Qm9PaFVNSVYwanNpRGI1d3BrNW16TUVBOHpBa25UcnlUdk0iLCJ0ZW5hbnRfcmVnaW9uX3Njb3BlIjoiTkEiLCJ0aWQiOiJjZGRjMTIyOS1hYzJhLTRiOTctYjc4YS0wZTVjYWNiNTg2NWMiLCJ1bmlxdWVfbmFtZSI6Ikp1bmFpZC5UYWxwdXJAb250YXJpby5jYSIsInVwbiI6Ikp1bmFpZC5UYWxwdXJAb250YXJpby5jYSIsInV0aSI6IjhPZE5pM2xQM0VHU3NrdEtsMThjQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfc3QiOnsic3ViIjoiMGZRYUJZcENCVUVWWUNTaTlfTGtlSDh4WFlNVlRBWXh5bHRQRFR1M0ZtcyJ9LCJ4bXNfdGNkdCI6MTQ3ODI2ODg3NX0.YY4_bcrFoew7NmFgjLhSdQ85xZycnnU7TW4ZYZNg0TkzCf3uquBQs64iHzXmQm34qC7zOisHFOc_3MAbrc6GqHMqhOwNoNK_2nIJ7WtKDnV9v_uOj3kwMtN1Xv7SJOikjR_bMCzKFfhO2U8qOfmt0o4N7Qz-SiJ_0rySuWtMfCdJP4QG1vz5iyp-velJdHE-mkhRIVqrDrP8Vxoq9o55MNGwSqxKt1uKRO0dH32AA0WtqR7cm77Ki-R9yW9zFx8yR93rG5Ty6DdBrYM2IBKTpS_bN_-Xvr9QO-K8roZPskuCoWzyy_2qrm4vpwUgTBLgyi4hI8BuoK7x238V-joBUA";
-        this.accessToken = this.getUserAccessToken(this.scope);
+        this.accessToken = "eyJ0eXAiOiJKV1QiLCJub25jZSI6Im9JdXlXd3FfOE0zeVhwSUtyZm9QaUJmaThyLUtocUtOeUExUW9GbFNWekEiLCJhbGciOiJSUzI1NiIsIng1dCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9jZGRjMTIyOS1hYzJhLTRiOTctYjc4YS0wZTVjYWNiNTg2NWMvIiwiaWF0IjoxNjc2NDE1ODE3LCJuYmYiOjE2NzY0MTU4MTcsImV4cCI6MTY3NjQyMDI2NCwiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFWUUFxLzhUQUFBQVBxa3BzK0E5VTlwZk9QZkxKYzU4Q1JtZDZpVStxWWlQRThSOWxWd1FFRDNVbmRDandZS1E2cjhHN2VlQjREaThsM1BFWTFtc250SXhaRkFFamwzNW5PNTM4MDU4d3dwWXMvRm9zN3c5QW00PSIsImFtciI6WyJwd2QiLCJtZmEiXSwiYXBwX2Rpc3BsYXluYW1lIjoiUGxhblN5bmMiLCJhcHBpZCI6IjhhZGUyODdmLTcxOTEtNGUyMC04MzdiLTU2MjFmNmY0Y2Y0ZCIsImFwcGlkYWNyIjoiMCIsImNvbnRyb2xzIjpbImFwcF9yZXMiXSwiY29udHJvbHNfYXVkcyI6WyIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiXSwiZmFtaWx5X25hbWUiOiJUYWxwdXIiLCJnaXZlbl9uYW1lIjoiSnVuYWlkIiwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiMTQyLjE5OC43Ny4xODIiLCJuYW1lIjoiVGFscHVyLCBKdW5haWQgKE1QQlNEKSIsIm9pZCI6IjQ4YTAwNDZlLTU5ZjctNGExZC1hZTUzLWM4ODM3ZDg5OTgzNCIsIm9ucHJlbV9zaWQiOiJTLTEtNS0yMS0yODExNDY2NTc3LTQxMTQ3MjU1MTAtMjA5NTUzOTU5NS0yMDY3OTEiLCJwbGF0ZiI6IjE0IiwicHVpZCI6IjEwMDMyMDAyNTlGMDRCQTgiLCJyaCI6IjAuQVJ3QUtSTGN6U3FzbDB1M2lnNWNyTFdHWEFNQUFBQUFBQUFBd0FBQUFBQUFBQUFjQU5BLiIsInNjcCI6IkNhbGVuZGFycy5SZWFkIGVtYWlsIE1haWwuUmVhZCBvcGVuaWQgcHJvZmlsZSBUYXNrcy5SZWFkIFRhc2tzLlJlYWQuU2hhcmVkIFRhc2tzLlJlYWRXcml0ZSBUYXNrcy5SZWFkV3JpdGUuU2hhcmVkIFVzZXIuUmVhZCBVc2VyLlJlYWRCYXNpYy5BbGwiLCJzdWIiOiJQUFRmemlWN0JvT2hVTUlWMGpzaURiNXdwazVtek1FQTh6QWtuVHJ5VHZNIiwidGVuYW50X3JlZ2lvbl9zY29wZSI6Ik5BIiwidGlkIjoiY2RkYzEyMjktYWMyYS00Yjk3LWI3OGEtMGU1Y2FjYjU4NjVjIiwidW5pcXVlX25hbWUiOiJKdW5haWQuVGFscHVyQG9udGFyaW8uY2EiLCJ1cG4iOiJKdW5haWQuVGFscHVyQG9udGFyaW8uY2EiLCJ1dGkiOiI4eVN1RkVNUVpVU0lBaUV0NmkwckFBIiwidmVyIjoiMS4wIiwid2lkcyI6WyJiNzlmYmY0ZC0zZWY5LTQ2ODktODE0My03NmIxOTRlODU1MDkiXSwieG1zX3N0Ijp7InN1YiI6IjBmUWFCWXBDQlVFVllDU2k5X0xrZUg4eFhZTVZUQVl4eWx0UERUdTNGbXMifSwieG1zX3RjZHQiOjE0NzgyNjg4NzV9.osQu2CyAwA-WH8zuqtoAqH5lOG2NR4Rnkfo8op5l-AVNBseC1awbLkIiVWbW7f6Q2mJJsO3-ChV3c6nQx6X94mNZzG0vGpDjtO_yLZU8qR7vJJvSZ_JxE1Df071Z5YYdMNXl0q3Vo_FpCEoTyQZb7UteVeZrepRAEVVi6_r5uj3bk1t3yv7ghccqwLU1QruptgaqWfDvvlJdOfii_afSFH27egWpy3OSDckYth1mK_eO6x9Cjn__K5UvSX7Ie4uBDOE9nQGGs2eUdJN_0X5X7kKEF3ZTZoJ3UmByER0H74fD0XgTa0K4IfaS5q0C1Jje41u8Byi2zMf18a9UJ04aGw";
+        //this.accessToken = this.getUserAccessToken(this.scope);
         System.out.println("Retrieved access token: " + this.accessToken);
 
         int choice = -1;
@@ -89,21 +93,32 @@ public class PlanSync {
             choice = input.nextInt();
             System.out.println();
 
+            String groupName;
+            String groupIDString;
+
             switch (choice) {
                 case 0:
                     // Exit the program
                     System.out.println("Exiting...");
                     break;
                 case 1:
-                    PlannerPlanCollectionPage plans = this.graphClient.groups(GROUP_ID).planner().plans().buildRequest().get();
-                    System.out.println("Total Planners: " + plans.getCount());
+                    System.out.println("Select a group to display planners for [Total: "+this.groups.size()+"] (0 to exit): ");
+                    groupName = this.groupSelection();
+                    groupIDString = this.groups.get(groupName);
+
+                    PlannerPlanCollectionPage plans = this.graphClient.groups(groupIDString).planner().plans().buildRequest().get();
+                    if(plans == null) {
+                        return;
+                    }
+
+                    System.out.println("\nTotal Planners in " + groupName + ": " + plans.getCount());
                     for(int i = 0; i < plans.getCurrentPage().size(); i++) {
                         PlannerPlan plannerPlan = plans.getCurrentPage().get(i);
                         System.out.printf((i+1)+") %-10s (%-10s)\n",plannerPlan.title,plannerPlan.id);
 
                         System.out.println("\tAll buckets for planner: ");
                         PlannerBucketCollectionPage tasks = this.getPlannerBuckets(plannerPlan.id);
-                        for(int j = 0; j < tasks.getCurrentPage().size(); j++){
+                        for(int j = 0; j < tasks.getCurrentPage().size(); j++) {
                             PlannerBucket bucket = tasks.getCurrentPage().get(j);
                             System.out.println("\t\t-> "+(j+1)+") " + bucket.name + " ("+bucket.id+")");
                         }
@@ -111,38 +126,45 @@ public class PlanSync {
                     break;
                 case 2:
                     System.out.println("======================== Planner Migration Menu ========================");
-                    PlannerPlanCollectionPage allPlanners = this.graphClient.groups(GROUP_ID).planner().plans().buildRequest().get();
-                    System.out.println("Total Planners: " + allPlanners.getCount());
+                    System.out.println("Select a SOURCE Planner group [Total: " + this.groups.size() + "] (0 to exit): ");
+                    // Select the group for the source planner
+                    groupName = this.groupSelection();
+                    groupIDString = this.groups.get(groupName);
 
-                    for(int i = 0; i < allPlanners.getCurrentPage().size(); i++) {
-                        PlannerPlan plannerPlan = allPlanners.getCurrentPage().get(i);
-                        System.out.printf((i+1)+") %-10s (%-10s)\n",plannerPlan.title,plannerPlan.id);
+                    PlannerPlanCollectionPage allPlanners = this.graphClient.groups(groupIDString).planner().plans().buildRequest().get();
+                    if(allPlanners == null) {
+                        return;
+                    }
+                    System.out.println("\nSelect a SOURCE Planner [Total: " + allPlanners.getCount() + "] (0 to exit): ");
+                    PlannerPlan sourcePlanner = this.plannerSelection(allPlanners);
+                    if(sourcePlanner == null) {
+                        return;
                     }
 
-                    System.out.print("\nEnter the ID of the source Planner (0 to exit): ");
-                    int sourcePlannerID = input.nextInt();
-                    if(sourcePlannerID <= 0 || sourcePlannerID > allPlanners.getCurrentPage().size()) {
-                        break;
-                    }
-                    // We get the source planner at the given index (subtract 1 because they start from 1)
-                    PlannerPlan sourcePlanner = allPlanners.getCurrentPage().get(sourcePlannerID - 1);
+                    System.out.println("\nSelect a TARGET Planner group [Total: " + this.groups.size() + "] (0 to exit): ");
+                    // Select the group for the target planner
+                    groupName = this.groupSelection();
+                    groupIDString = this.groups.get(groupName);
 
-                    System.out.print("Enter the ID of the target Planner (0 to exit): ");
-                    int targetPlannerID = input.nextInt();
-                    if(targetPlannerID <= 0 || targetPlannerID > allPlanners.getCurrentPage().size()) {
-                        break;
+                    allPlanners = this.graphClient.groups(groupIDString).planner().plans().buildRequest().get();
+                    if(allPlanners == null) {
+                        return;
                     }
-                    // We get the target planner at the given index (subtract 1 because they start from 1)
-                    PlannerPlan targetPlanner = allPlanners.getCurrentPage().get(targetPlannerID - 1);
 
-                    System.out.println("\nBuckets from " + targetPlanner.title +": ");
+                    System.out.println("\nSelect a TARGET Planner [Total: " + allPlanners.getCount() + "] (0 to exit): ");
+                    PlannerPlan targetPlanner = this.plannerSelection(allPlanners);
+                    if(targetPlanner == null) {
+                        return;
+                    }
+
+                    System.out.println("\nSelect a bucket from " + targetPlanner.title +": ");
                     PlannerBucketCollectionPage tasks = this.getPlannerBuckets(targetPlanner.id);
                     for(int j = 0; j < tasks.getCurrentPage().size(); j++){
                         PlannerBucket bucket = tasks.getCurrentPage().get(j);
                         System.out.println((j+1)+") " + bucket.name + " ("+bucket.id+")");
                     }
 
-                    System.out.print("\nEnter the ID of the target Bucket (0 to exit): ");
+                    System.out.print("> ");
                     int targetBucketID = input.nextInt();
                     if(targetBucketID <= 0 || targetBucketID > tasks.getCurrentPage().size()) {
                         break;
@@ -152,7 +174,7 @@ public class PlanSync {
                     // We get the target bucket at the given index (subtract 1 because they start from 1)
                     PlannerBucket targetBucket = tasks.getCurrentPage().get(targetBucketID - 1);
 
-                    System.out.print("Enter a prefix to add to the moved tasks (leave empty for no prefix): ");
+                    System.out.print("\nEnter a prefix to add to the moved tasks (leave empty for no prefix): ");
                     String titlePrefix = input.nextLine();
                     if(titlePrefix.isEmpty()) {
                         titlePrefix = "";
@@ -294,6 +316,50 @@ public class PlanSync {
                     System.out.println("Invalid choice");
             }
         }
+    }
+
+    /**
+     * Allows the user to select a planner and returns it
+     *
+     * @param planners The given {@link PlannerPlanCollectionPage} for the group we're accessing
+     * @return The selected {@link PlannerPlan}
+     */
+    private PlannerPlan plannerSelection(PlannerPlanCollectionPage planners) {
+        for(int i = 0; i < planners.getCurrentPage().size(); i++) {
+            PlannerPlan plannerPlan = planners.getCurrentPage().get(i);
+            System.out.printf((i+1)+") %-10s (%-10s)\n",plannerPlan.title,plannerPlan.id);
+        }
+
+        System.out.print("> ");
+        Scanner input = new Scanner(System.in);
+        int targetPlannerID = input.nextInt();
+        if(targetPlannerID <= 0 || targetPlannerID > planners.getCurrentPage().size()) {
+            return null;
+        }
+        // We get the target planner at the given index (subtract 1 because they start from 1)
+        return planners.getCurrentPage().get(targetPlannerID - 1);
+    }
+
+    /**
+     * Allows the user to pick a group and returns its name
+     *
+     * @return {@link String} the groups name
+     */
+    private String groupSelection() {
+        Scanner input = new Scanner(System.in);
+        int count=0;
+        for(String groupName: this.groups.keySet()) {
+            System.out.printf((count+1)+") %-10s (%-10s)\n", groupName, this.groups.get(groupName));
+            count++;
+        }
+
+        System.out.print("> ");
+        int groupID = input.nextInt();
+        if(groupID <= 0 || groupID > this.groups.size()) {
+            return "NULL";
+        }
+
+        return this.groupNames.get(groupID - 1);
     }
 
     /**
