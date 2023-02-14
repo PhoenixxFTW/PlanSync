@@ -71,6 +71,7 @@ public class PlanSync {
      * @throws Exception IOException, etc
      */
     public void runApp() throws Exception {
+        //this.accessToken = "eyJ0eXAiOiJKV1QiLCJub25jZSI6IjJ4NFQzb0V5Sm8yd1dfNE5ISmRxV1g1azBETl9jdmUyNHJUbWROeGp1cEkiLCJhbGciOiJSUzI1NiIsIng1dCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyIsImtpZCI6Ii1LSTNROW5OUjdiUm9meG1lWm9YcWJIWkdldyJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9jZGRjMTIyOS1hYzJhLTRiOTctYjc4YS0wZTVjYWNiNTg2NWMvIiwiaWF0IjoxNjc2Mzg3MDczLCJuYmYiOjE2NzYzODcwNzMsImV4cCI6MTY3NjM5MTQwOCwiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFUUUF5LzhUQUFBQXNIT2c1M1ZCODBzNVVPS2Ird0lFU2FBQy9xRSt5alFYTVBTUzBoZEZpZlI5ZlhraGtCSXNPMEV0WjgxRlA5Y3UiLCJhbXIiOlsicHdkIl0sImFwcF9kaXNwbGF5bmFtZSI6IlBsYW5TeW5jIiwiYXBwaWQiOiI4YWRlMjg3Zi03MTkxLTRlMjAtODM3Yi01NjIxZjZmNGNmNGQiLCJhcHBpZGFjciI6IjAiLCJmYW1pbHlfbmFtZSI6IlRhbHB1ciIsImdpdmVuX25hbWUiOiJKdW5haWQiLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiIyMDQuNDAuMTI5Ljc0IiwibmFtZSI6IlRhbHB1ciwgSnVuYWlkIChNUEJTRCkiLCJvaWQiOiI0OGEwMDQ2ZS01OWY3LTRhMWQtYWU1My1jODgzN2Q4OTk4MzQiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtMjgxMTQ2NjU3Ny00MTE0NzI1NTEwLTIwOTU1Mzk1OTUtMjA2NzkxIiwicGxhdGYiOiIxNCIsInB1aWQiOiIxMDAzMjAwMjU5RjA0QkE4IiwicmgiOiIwLkFSd0FLUkxjelNxc2wwdTNpZzVjckxXR1hBTUFBQUFBQUFBQXdBQUFBQUFBQUFBY0FOQS4iLCJzY3AiOiJDYWxlbmRhcnMuUmVhZCBlbWFpbCBNYWlsLlJlYWQgb3BlbmlkIHByb2ZpbGUgVGFza3MuUmVhZCBUYXNrcy5SZWFkLlNoYXJlZCBUYXNrcy5SZWFkV3JpdGUgVGFza3MuUmVhZFdyaXRlLlNoYXJlZCBVc2VyLlJlYWQgVXNlci5SZWFkQmFzaWMuQWxsIiwic2lnbmluX3N0YXRlIjpbImlua25vd25udHdrIl0sInN1YiI6IlBQVGZ6aVY3Qm9PaFVNSVYwanNpRGI1d3BrNW16TUVBOHpBa25UcnlUdk0iLCJ0ZW5hbnRfcmVnaW9uX3Njb3BlIjoiTkEiLCJ0aWQiOiJjZGRjMTIyOS1hYzJhLTRiOTctYjc4YS0wZTVjYWNiNTg2NWMiLCJ1bmlxdWVfbmFtZSI6Ikp1bmFpZC5UYWxwdXJAb250YXJpby5jYSIsInVwbiI6Ikp1bmFpZC5UYWxwdXJAb250YXJpby5jYSIsInV0aSI6IjhPZE5pM2xQM0VHU3NrdEtsMThjQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfc3QiOnsic3ViIjoiMGZRYUJZcENCVUVWWUNTaTlfTGtlSDh4WFlNVlRBWXh5bHRQRFR1M0ZtcyJ9LCJ4bXNfdGNkdCI6MTQ3ODI2ODg3NX0.YY4_bcrFoew7NmFgjLhSdQ85xZycnnU7TW4ZYZNg0TkzCf3uquBQs64iHzXmQm34qC7zOisHFOc_3MAbrc6GqHMqhOwNoNK_2nIJ7WtKDnV9v_uOj3kwMtN1Xv7SJOikjR_bMCzKFfhO2U8qOfmt0o4N7Qz-SiJ_0rySuWtMfCdJP4QG1vz5iyp-velJdHE-mkhRIVqrDrP8Vxoq9o55MNGwSqxKt1uKRO0dH32AA0WtqR7cm77Ki-R9yW9zFx8yR93rG5Ty6DdBrYM2IBKTpS_bN_-Xvr9QO-K8roZPskuCoWzyy_2qrm4vpwUgTBLgyi4hI8BuoK7x238V-joBUA";
         this.accessToken = this.getUserAccessToken(this.scope);
         System.out.println("Retrieved access token: " + this.accessToken);
 
@@ -236,29 +237,54 @@ public class PlanSync {
                         response = client.newCall(batchRequest).execute();
                         boolean failure = false;
 
-                        if(response.isSuccessful()) {
-                            System.out.println("Batch #"+batchCount + " successfully moved " + partition.size() + " tasks.");
-                        } else {
-                            failure = true;
-                            System.out.println("Batch #"+batchCount + " failed to move " + partition.size() + " tasks.");
-                        }
-
-                        responseObj = new JSONObject(response.body().string());
+                        // We CANNOT call response.body() more than once as OkHTTP stores the response in memory and if its too big, we get an error
+                        String responseBody = response.body().string();
+                        responseObj = new JSONObject(responseBody);
                         JSONArray responseArray = responseObj.getJSONArray("responses");
 
+                        // This gets really messy so I apologize beforehand.
+                        // This will only find ONE failed response, not others
 
+                        int failureCode = -1;
+                        int reqID = -1;
+                        JSONObject failedRequest = null;
+                        JSONObject failedResponse = null;
                         for(int i = 0; i < responseArray.length(); i++) {
                             JSONObject jsonObject = responseArray.getJSONObject(i);
 
+                            int statusCode = jsonObject.getInt("status");
                             if(jsonObject.getInt("status") != 204) {
                                 failure = true;
-                                System.out.println("Batch #"+batchCount + " may have had an failed response object! Check the JSON response below for any mishaps.");
+
+                                reqID = jsonObject.getInt("id");
+                                // We loop through the updatedTasks array json object to find the request with the ID of the current object we're at
+                                for(int j = 0; j < updatedTasks.length(); j++) {
+                                    JSONObject currTask = updatedTasks.getJSONObject(j);
+                                    // If the ID matches, that's the failed request
+                                    if(currTask.getInt("id") == reqID) {
+                                        failedRequest = currTask;
+                                        failedResponse = jsonObject;
+                                        failureCode = statusCode;
+                                        break;
+                                    }
+                                }
+
                             }
                         }
 
+                        if(response.isSuccessful() && !failure) {
+                            System.out.println("Batch #"+batchCount + " successfully moved " + partition.size() + " tasks.");
+                        } else {
+                            failure = true;
+                            System.out.println("Batch #"+batchCount + " had a failure while trying to move " + partition.size() + " tasks.");
+                        }
+
                         if(failure) {
-                            System.out.println("Batch Request [#" + batchCount +"]: " + bodyToString(batchRequest));
-                            System.out.println("Batch Response [#"+ batchCount +"]: " + response.body().string());
+                            System.out.println("================================ ERROR LOG ================================");
+                            System.out.println("Received status: " + failureCode + " on \nrequest: " + (failedRequest != null ? failedRequest.toString() : "Could not find request with ID: " + reqID) + " \nresponse: " + (failedResponse != null ? failedResponse.toString() : " Could not find response with id: " + reqID));
+                            System.out.println("Full Batch Request [#" + batchCount +"]: " + bodyToString(batchRequest));
+                            System.out.println("Full Batch Response [#"+ batchCount +"]: " + responseBody);
+                            System.out.println("===========================================================================");
                         }
 
                         batchCount++;
